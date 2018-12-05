@@ -3,11 +3,38 @@ package com.pdx.ece558finalproject_ad.smarthome;
 public class User {
 
     private String userId;
-    private String passWord;
+    private String mPassword;
     private String email;
-    private double lattitude;
+    private double latitude;
     private double longitude;
     private NetworkInformation mNetworkInfo;
+    private String SSID;
+    private String MAC;
+    private int RSSI;
+
+    public String getSSID() {
+        return SSID;
+    }
+
+    public void setSSID(String SSID) {
+        this.SSID = SSID;
+    }
+
+    public String getMAC() {
+        return MAC;
+    }
+
+    public void setMAC(String MAC) {
+        this.MAC = MAC;
+    }
+
+    public int getRSSI() {
+        return RSSI;
+    }
+
+    public void setRSSI(int RSSI) {
+        this.RSSI = RSSI;
+    }
 
     public User(){
 
@@ -25,51 +52,28 @@ public class User {
         return mNetworkInfo;
     }
 
-    public void setNetworkInfo(NetworkInformation networkInfo) {
+    public User setNetworkInfo(NetworkInformation networkInfo) {
         this.mNetworkInfo = networkInfo;
+        return this;
     }
 
     public User(String userId, String passWord) {
         this.userId = userId;
-        this.passWord = passWord;
-    }
-
-    public User(String userId, String passWord, String apName, String apMAC, int apRSSI){
-        this.userId = userId;
-        this.passWord = passWord;
-        this.mNetworkInfo.setSSID(apName);
-        this.mNetworkInfo.setMAC(apMAC);
-        this.mNetworkInfo.setRSSI(apRSSI);
+        this.mPassword = passWord;
     }
 
     public User(String userId, String passWord, NetworkInformation networkInfo){
         this.userId = userId;
-        this.passWord = passWord;
+        this.mPassword = passWord;
         this.mNetworkInfo = networkInfo;
     }
 
-    public String getApName() {
-        return mNetworkInfo.getSSID();
+    public double getLatitude() {
+        return latitude;
     }
 
-    public void setApName(String apName) {
-        this.mNetworkInfo.setSSID(apName);
-    }
-
-    public String getMacAddr() {
-        return this.mNetworkInfo.getMAC();
-    }
-
-    public void setMacAddr(String macAddr) {
-        this.mNetworkInfo.setMAC(macAddr) ;
-    }
-
-    public double getLattitude() {
-        return lattitude;
-    }
-
-    public void setLattitude(double lattitude) {
-        this.lattitude = lattitude;
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
     }
 
     public double getLongitude() {
@@ -80,14 +84,6 @@ public class User {
         this.longitude = longitude;
     }
 
-    public int getRssi() {
-        return this.mNetworkInfo.getRSSI();
-    }
-
-    public void setRssi(int rssi) {
-        this.mNetworkInfo.setRSSI(rssi);
-    }
-
     public String getUserId() {
         return userId;
     }
@@ -96,12 +92,12 @@ public class User {
         this.userId = userId;
     }
 
-    public String getPassWord() {
-        return passWord;
+    public String getPassword() {
+        return mPassword;
     }
 
-    public void setPassWord(String passWord) {
-        this.passWord = passWord;
+    public void setPassword(String password) {
+        this.mPassword = password;
     }
 }
 

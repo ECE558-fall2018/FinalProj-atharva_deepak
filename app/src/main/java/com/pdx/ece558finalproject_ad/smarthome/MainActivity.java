@@ -1,14 +1,19 @@
 package com.pdx.ece558finalproject_ad.smarthome;
 
+import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -24,8 +29,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
-
 public class MainActivity extends AppCompatActivity {
 
     private EditText mUserId;
@@ -36,6 +39,22 @@ public class MainActivity extends AppCompatActivity {
     private DatabaseReference mUsers;
     private FirebaseHelper mFirebaseHelper = new FirebaseHelper();
     private static final String TAG = MainActivity.class.getSimpleName();
+    private NetworkInformation apInfo = new NetworkInformation();
+    private LocationManager mLocationManager;
+    private android.location.LocationListener mLocationListener;
+    private double mLatitude = 0;
+    private double mLongitude = 0;
+    private boolean loggedIn = false;
+    private double homeLatitude = 0;
+    private double homeLongitude = 0;
+    private String homeAPSSID;
+    private String homeAPMAC;
+    private double homeAPRSSI;
+    private DatabaseReference ref;
+    private DatabaseReference occupiedRef;
+    private DatabaseReference latitudeRef;
+    private DatabaseReference longitudeRef;
+    DatabaseReference userDB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
 
         mFirebaseDatabase = mFirebaseDatabase.getInstance();
         mUsers = FirebaseDatabase.getInstance().getReference();
+        ref = FirebaseDatabase.getInstance().getReference();
+        occupiedRef = ref.child("OCCUPIED");
 
         mUserId = findViewById(R.id.etUserId);
         mPassword = findViewById(R.id.etPassword);
@@ -68,51 +89,139 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-    }
+        mLocationManager = (LocationManager) this.getSystemService(LOCATION_SERVICE);
 
-    private void doSignIn(final String userId, final String password) {
-        if(userId == null || password == null){
-            displayError();
-        }else{
-            mUsers.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    if(dataSnapshot.child(userId).exists()){
-                        if(!userId.isEmpty()){
-                            User login = dataSnapshot.child(userId).getValue(User.class);
-                            if(login.getPassWord().equals(password)){
-                                Toast.makeText(MainActivity.this,"Login Success", Toast.LENGTH_SHORT).show();
+        mLocationListener = new android.location.LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                Log.d(TAG, location.toString());
 
-                                NetworkInformation apInfo = new NetworkInformation();
-                                apInfo = getAPInfo(getApplicationContext().getApplicationContext());
-                                login.setNetworkInfo(apInfo);
+                if(loggedIn) {
+                    if((Math.abs(mLatitude - location.getLatitude()) > 0.00002) || (Math.abs(mLongitude - location.getLongitude()) > 0.00002)){
+                        Log.d(TAG, "Location Change Detected..Delta is:"
+                                + (mLongitude - location.getLongitude()) + "and "
+                                + (mLatitude - location.getLatitude()) +
+                                "writing back to DB");
+                        mLatitude = location.getLatitude();
+                        mLongitude = location.getLongitude();
 
-                                mUsers.child(login.getUserId()).setValue(login);
+                        latitudeRef.setValue(mLatitude);
+                        longitudeRef.setValue(mLongitude);
 
-                                Intent intent = new Intent(getApplicationContext(), SmartHomeActivity.class);
-                                intent.putExtra("userId", userId);
-                                startActivity(intent);
-
-                            }else{
-                                Toast.makeText(MainActivity.this, "Incorrect Credentials", Toast.LENGTH_SHORT).show();
-                            }
-                        }else{
-                            Toast.makeText(MainActivity.this,"No such user exisits", Toast.LENGTH_SHORT).show();
-                        }
+                    }else
+                    {
+                        Log.d(TAG, "Delta is:" + (mLongitude - location.getLongitude()) + "and " + (mLatitude - location.getLatitude()) + "Discarding Location Data.. no significant change in postion");
                     }
+
+                    isOccupied();
+
+                }else {
+                    Log.d(TAG, "Not logged in.. discarding the write to DB");
                 }
 
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
+            }
 
-                }
-            });
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        };
+
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this, new String[]  {Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+            return;
         }
+        mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (android.location.LocationListener) mLocationListener);
 
     }
 
-    private void displayError() {
+    private void doSignIn(@NonNull final String userId,@NonNull final String password) {
 
+        mUsers.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                if(dataSnapshot.child(userId).exists()){
+
+                    Log.d(TAG, "Child exists for the user " + dataSnapshot.child(userId));
+
+                    User login = (User) dataSnapshot.child(userId).getValue(User.class);
+
+                    homeLatitude = Double.valueOf(dataSnapshot.child("HOMELAT").getValue(String.class));
+                    homeLongitude = Double.valueOf(dataSnapshot.child("HOMELNG").getValue(String.class));
+                    homeAPMAC = dataSnapshot.child("MAC").getValue(String.class);
+                    homeAPRSSI = Double.valueOf(dataSnapshot.child("RSSI").getValue(String.class));
+                    homeAPSSID = dataSnapshot.child("SSID").getValue(String.class);
+
+                    Log.d(TAG, "Read back info from DB; Userid " + login.getUserId() + " " + homeLatitude + " " + homeLongitude);
+
+                    isOccupied();
+
+
+                    if(login.getPassword().equals(password)){
+                        Log.d(TAG, "Passwords match.. loging you in");
+
+                        Toast.makeText(MainActivity.this,"Login Success", Toast.LENGTH_SHORT).show();
+
+                        apInfo = getAPInfo(getApplicationContext().getApplicationContext());
+
+                        login.setMAC(apInfo.getMAC());
+                        login.setRSSI(apInfo.getRSSI());
+                        login.setSSID(apInfo.getSSID());
+                        login.setLatitude(mLatitude);
+                        login.setLongitude(mLongitude);
+
+                        mUsers.child(login.getUserId()).setValue(login);
+                        //Database references used to write data (location/wifi) into User class
+                        userDB = mFirebaseHelper.getDatabaseChildRef(mUserId.getText().toString());
+                        latitudeRef = ref.child(mUserId.getText().toString()).child("latitude");
+                        longitudeRef = ref.child(mUserId.getText().toString()).child("longitude");
+
+                        loggedIn = true;
+
+                        Intent intent = new Intent(getApplicationContext().getApplicationContext(), SmartHomeActivity.class);
+                        intent.putExtra("userId", userId);
+                        startActivity(intent);
+
+                    }else{
+                        Toast.makeText(MainActivity.this, "Incorrect Credentials", Toast.LENGTH_SHORT).show();
+                    }
+                }else{
+                    Toast.makeText(MainActivity.this,"No such user exisits", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+    }
+
+    private void isOccupied() {
+
+        apInfo = getAPInfo(getApplicationContext().getApplicationContext());
+        double latitudeDelta = Math.abs(homeLatitude - mLatitude);
+        double longitudeDelta = Math.abs(homeLongitude - mLongitude);
+
+        if((latitudeDelta < 0.00002) && (longitudeDelta < 0.00002) && (homeAPMAC.equals(apInfo.getMAC()))){
+            occupiedRef.setValue("TRUE");
+        }else{
+            occupiedRef.setValue("FALSE");
+        }
     }
 
     private void doRegistration(String userId, String passWord) {
@@ -137,7 +246,7 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(wifiStateReceiver);
     }
 
-    private BroadcastReceiver wifiStateReceiver = new BroadcastReceiver() {
+    public BroadcastReceiver wifiStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
 
@@ -162,13 +271,17 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "Currently connected to " + apInfo.getSSID());
         Log.d(TAG, "Currently connected to MAC " + apInfo.getMAC());
         Log.d(TAG, "Currently signal strength of Wifi is " + apInfo.getRSSI());
+        if(loggedIn) {
+
+            userDB.child("SSID").setValue(apInfo.getSSID());
+            userDB.child("MAC").setValue(apInfo.getMAC());
+            userDB.child("RSSI").setValue(apInfo.getRSSI());
+        }
 
     }
 
     public static NetworkInformation getAPInfo(Context context) {
-        String ssid = null;
-        String macAddr = null;
-        int RSSI = 0;
+
         NetworkInformation apInfo = new NetworkInformation();
         ConnectivityManager connManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
@@ -189,4 +302,5 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         String userID = data.getStringExtra("userId");
     }
+
 }

@@ -57,8 +57,11 @@ public class RegistrationActivity extends AppCompatActivity {
 
         NetworkInformation apInfo = new NetworkInformation();
         apInfo = MainActivity.getAPInfo(getApplicationContext().getApplicationContext());
-        final User user = new User(userId, password, apInfo);
+        final User user = new User(userId, password);
         user.setEmail(email);
+        user.setSSID(apInfo.getSSID());
+        user.setRSSI(apInfo.getRSSI());
+        user.setMAC(apInfo.getMAC());
 
         mUsers.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -66,7 +69,7 @@ public class RegistrationActivity extends AppCompatActivity {
                 if(dataSnapshot.child(user.getUserId()).exists()) {
                     Toast.makeText(RegistrationActivity.this, "User already exists", Toast.LENGTH_SHORT).show();
                 }else{
-                    mUsers.child(user.getUserId()).setValue(user);
+                    mUsers.child(userId).setValue(user);
                     Toast.makeText(RegistrationActivity.this, "User Registered successfully", Toast.LENGTH_SHORT).show();
                     Intent myIntent = new Intent();
                     myIntent.putExtra("userId", userId);
@@ -83,5 +86,9 @@ public class RegistrationActivity extends AppCompatActivity {
 
     private void displayError() {
         Toast.makeText(RegistrationActivity.this, "All fields required. Please retry", Toast.LENGTH_SHORT).show();
+        Intent myIntent = new Intent();
+        myIntent.putExtra("userId", "Not Registered");
+        setResult(RESULT_CANCELED, myIntent);
+        finish();
     }
 }
