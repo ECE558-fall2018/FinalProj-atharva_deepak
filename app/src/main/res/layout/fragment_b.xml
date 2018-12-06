@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/holo_blue_light"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="monospace"
+        android:gravity="center"
+        android:text="ROOM 2"
+        android:textAllCaps="false"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:gravity="center"
+        android:text="LED control"/>
+
+    <SeekBar
+        android:id="@+id/seekbar_LED"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:visibility="gone"/>
+    <TextView
+        android:id="@+id/ledstatus"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:gravity="center"
+        android:visibility="visible"
+        android:text="LED status"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:text="Motor control"/>
+
+    <SeekBar
+        android:id="@+id/seekbar_Motor"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/motorstatus"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:gravity="center"
+        android:visibility="visible"
+        android:text="LED status"/>
+
+</LinearLayout>

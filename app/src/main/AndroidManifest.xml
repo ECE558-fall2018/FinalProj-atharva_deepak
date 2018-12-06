@@ -23,7 +23,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".RegistrationActivity" />
-        <activity android:name=".SmartHomeActivity"></activity>
+        <activity android:name=".SmartHomeActivity" />
+        <activity android:name=".HomeActivity"></activity>
     </application>
 
 </manifest>

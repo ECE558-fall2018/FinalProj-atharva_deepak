@@ -29,6 +29,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class MainActivity extends AppCompatActivity {
 
     private EditText mUserId;
@@ -74,9 +77,16 @@ public class MainActivity extends AppCompatActivity {
         mSignin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                doSignIn(mUserId.getText().toString(),
-                        mPassword.getText().toString()
-                        );
+
+                boolean allOK = checkUserId(mUserId.getText().toString());
+
+                if(allOK) {
+                    doSignIn(mUserId.getText().toString(),
+                            mPassword.getText().toString()
+                    );
+                }else{
+                    Toast.makeText(MainActivity.this,"Illegal character.. please try again", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -147,6 +157,20 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private boolean checkUserId(String userId) {
+        Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
+        Matcher m = p.matcher(userId);
+        boolean b = m.find();
+
+        if(b) {
+            Log.d(TAG, "There is a special character in userId");
+            return false;
+        }
+
+        return true;
+
+    }
+
     private void doSignIn(@NonNull final String userId,@NonNull final String password) {
 
         mUsers.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -191,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
 
                         loggedIn = true;
 
-                        Intent intent = new Intent(getApplicationContext().getApplicationContext(), SmartHomeActivity.class);
+                        Intent intent = new Intent(getApplicationContext().getApplicationContext(), HomeActivity.class);
                         intent.putExtra("userId", userId);
                         startActivity(intent);
 
@@ -300,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
     //This is the reentry point for this activity when the called activity finishes
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        String userID = data.getStringExtra("userId");
+        //String userID = data.getStringExtra("userId");
     }
 
 }

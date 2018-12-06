@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -14,6 +15,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RegistrationActivity extends AppCompatActivity {
 
@@ -41,11 +45,33 @@ public class RegistrationActivity extends AppCompatActivity {
         mRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                doRegistration(mUserId.getText().toString(),
-                               mPassword.getText().toString(),
-                               mEmail.getText().toString());
+                boolean allOK = checkUserId(mUserId.getText().toString());
+
+                if(allOK) {
+                    doRegistration(mUserId.getText().toString(),
+                            mPassword.getText().toString(),
+                            mEmail.getText().toString());
+                }
+                else
+                {
+                    Toast.makeText(RegistrationActivity.this,"Illegal character.. please try again", Toast.LENGTH_SHORT).show();
+                }
             }
         });
+
+    }
+
+    private boolean checkUserId(String userId) {
+        Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
+        Matcher m = p.matcher(userId);
+        boolean b = m.find();
+
+        if(b) {
+            Log.d(TAG, "There is a special character in userId");
+            return false;
+        }
+
+        return true;
 
     }
 
@@ -89,6 +115,14 @@ public class RegistrationActivity extends AppCompatActivity {
         Intent myIntent = new Intent();
         myIntent.putExtra("userId", "Not Registered");
         setResult(RESULT_CANCELED, myIntent);
+        finish();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent myIntent = new Intent();
+        setResult(RESULT_OK, myIntent);
         finish();
     }
 }
