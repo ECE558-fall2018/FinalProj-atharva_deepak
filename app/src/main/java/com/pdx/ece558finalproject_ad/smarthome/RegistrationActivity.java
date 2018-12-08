@@ -42,12 +42,15 @@ public class RegistrationActivity extends AppCompatActivity {
         mEmail = findViewById(R.id.etEmail);
         mRegister = findViewById(R.id.btnRegister);
 
+        //Setting up an listener for capturing the Button click for the Register button
         mRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //Checking to see if the userid contains only legal characters
                 boolean allOK = checkUserId(mUserId.getText().toString());
 
                 if(allOK) {
+                    //proceed with registering the new user
                     doRegistration(mUserId.getText().toString(),
                             mPassword.getText().toString(),
                             mEmail.getText().toString());
@@ -61,6 +64,12 @@ public class RegistrationActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * checkUserId - checking to see if user entered any illegal
+     * characters while registering
+     * @param userId
+     * @return
+     */
     private boolean checkUserId(String userId) {
         Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
         Matcher m = p.matcher(userId);
@@ -75,12 +84,20 @@ public class RegistrationActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * doRegistration - method to register a new user into the system
+     * @param userId
+     * @param password
+     * @param email
+     */
+
     private void doRegistration(final String userId, final String password, final String email) {
 
         if(userId == null || password == null || email == null){
             displayError();
         }
 
+        //Collect the current network information and append it in the user info
         NetworkInformation apInfo = new NetworkInformation();
         apInfo = MainActivity.getAPInfo(getApplicationContext().getApplicationContext());
         final User user = new User(userId, password);
@@ -110,6 +127,9 @@ public class RegistrationActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * if the user failed to fill all fields, display error and retry
+     */
     private void displayError() {
         Toast.makeText(RegistrationActivity.this, "All fields required. Please retry", Toast.LENGTH_SHORT).show();
         Intent myIntent = new Intent();

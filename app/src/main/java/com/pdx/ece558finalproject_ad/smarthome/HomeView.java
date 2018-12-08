@@ -69,11 +69,6 @@ public class HomeView extends Fragment {
         Log.d(TAG, "Currently connected to MAC " + apInfo.getMAC());
         Log.d(TAG, "Currently signal strength of Wifi is " + apInfo.getRSSI());
 
-        //DatabaseReference userDB = mFirebaseHelper.getDatabaseChildRef(mUserId.toString());
-
-        //userDB.child("SSID").setValue(apInfo.getSSID());
-        //userDB.child("MAC").setValue(apInfo.getMAC());
-        //userDB.child("RSSI").setValue(apInfo.getRSSI());
     }
 
     public static NetworkInformation getAPInfo(Context context) {

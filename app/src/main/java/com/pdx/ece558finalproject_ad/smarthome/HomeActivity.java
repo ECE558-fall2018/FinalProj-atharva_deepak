@@ -27,7 +27,7 @@ public class HomeActivity extends AppCompatActivity implements FragmentA.Fragmen
     private FragmentB fragmentB;
     private Switch override_switch;
 
-    private TextView Temperature;
+    private TextView Temperature, IntruderStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +40,7 @@ public class HomeActivity extends AppCompatActivity implements FragmentA.Fragmen
 
         override_switch = (Switch) findViewById(R.id.override);
         Temperature = (TextView) findViewById(R.id.tempview);
+        IntruderStatus = (TextView) findViewById(R.id.intruderStatus);
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.container_a, fragmentA)
@@ -123,10 +124,17 @@ public class HomeActivity extends AppCompatActivity implements FragmentA.Fragmen
                     break;
 
                 case "INTRUSION":
-                    if(data.equalsIgnoreCase("1"))
-                        Log.d(TAG,"intrusion detected");
-                    else
-                        Log.d(TAG,"no intrusion "+data);
+                    if(data.equalsIgnoreCase("1")) {
+                        Log.d(TAG, "intrusion detected");
+                        IntruderStatus.setTextColor(getResources().getColor(R.color.colorAccent));
+                        IntruderStatus.setText("INTRUDER DETECTED");
+                    }
+                    else{
+                        Log.d(TAG, "no intrusion " + data);
+                        IntruderStatus.setTextColor(getResources().getColor(R.color.colorPrimary));
+                        IntruderStatus.setText("SAFE");
+
+                    }
                     break;
 
                 default:
