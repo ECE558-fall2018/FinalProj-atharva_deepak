@@ -74,13 +74,15 @@ public class MainActivity extends AppCompatActivity {
         mSignin = findViewById(R.id.btnSignin);
         mRegister = findViewById(R.id.btnRegister);
 
+        //Setting up Onclick event handler for the Signin Button in UI
         mSignin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                //Checking to see that the user input is free of illeagal characters
                 boolean allOK = checkUserId(mUserId.getText().toString());
 
                 if(allOK) {
+                    //Invoke signin and pass along the string values from the corresponding textviews
                     doSignIn(mUserId.getText().toString(),
                             mPassword.getText().toString()
                     );
@@ -90,23 +92,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //Setting up Onclcik event handler for the Register Button in the UI
         mRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 doRegistration(mUserId.getText().toString(),
-                               mPassword.getText().toString()
-                               );
+                        mPassword.getText().toString()
+                );
             }
         });
-
+        //Subscribing to system notifications relating to LOCATION
         mLocationManager = (LocationManager) this.getSystemService(LOCATION_SERVICE);
 
+        //setting up a listener to catch the changes in location
         mLocationListener = new android.location.LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 Log.d(TAG, location.toString());
-
+                //Checking to see if the user is logged in. We are saving the location info for each user and
+                //if the user is not logged in, we need worry about updating the location
                 if(loggedIn) {
+                    //Checking to see if the users location has changed in a significant enough manner, if not, we will discard the change
                     if((Math.abs(mLatitude - location.getLatitude()) > 0.00002) || (Math.abs(mLongitude - location.getLongitude()) > 0.00002)){
                         Log.d(TAG, "Location Change Detected..Delta is:"
                                 + (mLongitude - location.getLongitude()) + "and "
@@ -147,16 +153,24 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
-
+        //if the application doesnt have sufficient permission to access location, it will then request permission from the User to approve its use
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
 
             ActivityCompat.requestPermissions(this, new String[]  {Manifest.permission.ACCESS_FINE_LOCATION}, 1);
             return;
         }
+
+        //Location manager is set to listen to GPS location updates and raise events in Location listener
         mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (android.location.LocationListener) mLocationListener);
 
     }
 
+    /**
+     * checkUserId - Method to check if the UserId contains illegal characters that
+     * may break the firebase database
+     * @param userId
+     * @return
+     */
     private boolean checkUserId(String userId) {
         Pattern p = Pattern.compile("[^a-z0-9 ]", Pattern.CASE_INSENSITIVE);
         Matcher m = p.matcher(userId);
@@ -171,6 +185,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * doSignIn - Method to perform signin operation
+     * @param userId
+     * @param password
+     */
+
     private void doSignIn(@NonNull final String userId,@NonNull final String password) {
 
         mUsers.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -183,6 +203,7 @@ public class MainActivity extends AppCompatActivity {
 
                     User login = (User) dataSnapshot.child(userId).getValue(User.class);
 
+                    //Retreive Home's location and Network information from Firebase
                     homeLatitude = Double.valueOf(dataSnapshot.child("HOMELAT").getValue(String.class));
                     homeLongitude = Double.valueOf(dataSnapshot.child("HOMELNG").getValue(String.class));
                     homeAPMAC = dataSnapshot.child("MAC").getValue(String.class);
@@ -191,30 +212,31 @@ public class MainActivity extends AppCompatActivity {
 
                     Log.d(TAG, "Read back info from DB; Userid " + login.getUserId() + " " + homeLatitude + " " + homeLongitude);
 
-                    isOccupied();
-
-
+                    //check to see the user entered the correct password
                     if(login.getPassword().equals(password)){
                         Log.d(TAG, "Passwords match.. loging you in");
 
                         Toast.makeText(MainActivity.this,"Login Success", Toast.LENGTH_SHORT).show();
 
                         apInfo = getAPInfo(getApplicationContext().getApplicationContext());
-
+                        //Update the User class with the relevant location information
                         login.setMAC(apInfo.getMAC());
                         login.setRSSI(apInfo.getRSSI());
                         login.setSSID(apInfo.getSSID());
                         login.setLatitude(mLatitude);
                         login.setLongitude(mLongitude);
 
+                        //Write back the data into the Firebase database
                         mUsers.child(login.getUserId()).setValue(login);
                         //Database references used to write data (location/wifi) into User class
                         userDB = mFirebaseHelper.getDatabaseChildRef(mUserId.getText().toString());
                         latitudeRef = ref.child(mUserId.getText().toString()).child("latitude");
                         longitudeRef = ref.child(mUserId.getText().toString()).child("longitude");
 
-                        loggedIn = true;
 
+                        //Globally track login
+                        loggedIn = true;
+                        //Call the UI for controlling the devices
                         Intent intent = new Intent(getApplicationContext().getApplicationContext(), HomeActivity.class);
                         intent.putExtra("userId", userId);
                         startActivity(intent);
@@ -233,8 +255,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //Checking to see if the user is at home based on his current location and Home location
+        isOccupied();
+
     }
 
+    /**
+     * IsOccupied - Method to write the Status "OCCUPIED" back into the firedb
+     */
     private void isOccupied() {
 
         apInfo = getAPInfo(getApplicationContext().getApplicationContext());
@@ -248,6 +276,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * doRegistration - Kicks off the Registration activity
+     * @param userId
+     * @param passWord
+     */
     private void doRegistration(String userId, String passWord) {
 
         int result = 0;
@@ -270,6 +303,9 @@ public class MainActivity extends AppCompatActivity {
         unregisterReceiver(wifiStateReceiver);
     }
 
+    /**
+     * Broadcast receiver to capture and raise events for WIFI state change notifications
+     */
     public BroadcastReceiver wifiStateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -289,6 +325,10 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     * updateAP - method to read information of the currently connected AP
+     * and update the firebase entries which track them
+     */
     private void updateAP() {
         NetworkInformation apInfo = new NetworkInformation();
         apInfo = getAPInfo(getApplicationContext().getApplicationContext());
@@ -304,6 +344,11 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * getAPinfo - helper function to get the relevant Access point information
+     * @param context
+     * @return
+     */
     public static NetworkInformation getAPInfo(Context context) {
 
         NetworkInformation apInfo = new NetworkInformation();

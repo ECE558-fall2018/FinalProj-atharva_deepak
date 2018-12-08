@@ -1,3 +1,7 @@
+/**
+ * NOT USED
+ */
+
 package com.pdx.ece558finalproject_ad.smarthome;
 
 import android.support.v4.app.FragmentActivity;

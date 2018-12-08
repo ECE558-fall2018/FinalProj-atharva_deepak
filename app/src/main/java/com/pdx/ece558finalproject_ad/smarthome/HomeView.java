@@ -1,3 +1,6 @@
+/**
+ * not used
+ */
 package com.pdx.ece558finalproject_ad.smarthome;
 
 
