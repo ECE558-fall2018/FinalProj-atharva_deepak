@@ -44,6 +44,22 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"/>
 
+        <TextView
+            android:id="@+id/intrude"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:paddingTop="10dp"
+            android:text="INTRUDER STATUS :" />
+
+        <TextView
+            android:id="@+id/intruderStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:paddingTop="10dp"
+            android:text="" />
+
 
     </LinearLayout>
 
