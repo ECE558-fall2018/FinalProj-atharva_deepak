@@ -32,7 +32,7 @@ public class HomeActivity extends AppCompatActivity implements FragmentA.Fragmen
     private FragmentB fragmentB;
     private Switch override_switch;
 
-    private TextView Temperature;
+    private TextView Temperature, IntruderStatus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,10 +183,15 @@ public class HomeActivity extends AppCompatActivity implements FragmentA.Fragmen
                 case "INTRUSION":
                     if(data.equalsIgnoreCase("1")) {
                         Log.d(TAG, "intrusion detected");
+                        IntruderStatus.setTextColor(getResources().getColor(R.color.colorAccent));
+                        IntruderStatus.setText("INTRUDER DETECTED");
                     }
-                    else
-                        Log.d(TAG,"no intrusion "+data);
-                    break;
+                    else{
+                        Log.d(TAG, "no intrusion " + data);
+                        IntruderStatus.setTextColor(getResources().getColor(R.color.colorPrimary));
+                        IntruderStatus.setText("SAFE");
+
+                    }
 
                 default:
                     fbHelper.updateTimeStamp();
